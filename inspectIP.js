@@ -1,12 +1,23 @@
-const { networkInterfaces } = require('os');
-const interfaces = networkInterfaces();
-for (var devName in interfaces) {
-    var iface = interfaces[devName];
+// References StackOverflow.com question/response at https://stackoverflow.com/a/8440736/18031022 (last accessed 2022-07-24)
 
-    for (var i = 0; i < iface.length; i++) {
-    var alias = iface[i];
-    if (alias.family === 'IPv4' && alias.address !== '127.0.0.1' && !alias.internal)
-        return console.log(`Your IP: ${alias.address}`);
+'use strict';
+
+const { networkInterfaces } = require('os')
+
+const nets = networkInterfaces()
+const results = {}
+
+for (const name of Object.keys(nets)) {
+    for (const net of nets[name]) {
+        // Skip over non-IPv4 and internal (i.e. 127.0.0.1) addresses
+        // 'IPv4' is in Node <= 17, from 18 it's a number 4 or 6
+        const familyV4Value = typeof net.family === 'string' ? 'IPv4' : 4 // set constant for IPv4 family value
+        if (net.family === familyV4Value && !net.internal) { // looking for IPv4 addresses only and not internal addresses
+            if (!results[name]) {
+                results[name] = [];
+            }
+            results[name].push(net.address);
+        }
     }
 }
-throw Error('No network connection detected')
+console.log(results)
